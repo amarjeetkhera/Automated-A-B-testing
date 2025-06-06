@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+from scipy import stats
+import numpy as np
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -189,19 +191,6 @@ if st.session_state['df'] is not None:
     )
     st.session_state['metric_type'] = metric_type
 
-    # 5. Choose Sample Size (or indicate current observed sample size)
-    st.sidebar.subheader("5. Sample Size (Optional for Planning)")
-    st.sidebar.write("If you are planning an experiment, enter your target sample size. If analyzing completed data, this will be automatically derived.")
-    # For now, let's allow an optional input. We'll derive it later from data.
-    target_sample_size = st.sidebar.number_input(
-        "Target Sample Size per group",
-        min_value=10, # Minimum reasonable sample size
-        value=st.session_state.get('target_sample_size', 1000), # Default value
-        step=100,
-        key='sample_size_input'
-    )
-    st.session_state['target_sample_size'] = target_sample_size
-
     st.sidebar.markdown("---")
     st.sidebar.write("Ready to analyze? Click the button below!")
     run_analysis_button = st.sidebar.button("Run Analysis", type="primary")
@@ -216,7 +205,6 @@ if st.session_state['df'] is not None:
     st.write(f"**Variant Column:** `{variant_column}`")
     st.write(f"**Metric Column:** `{metric_column}`")
     st.write(f"**Metric Type:** `{metric_type}`")
-    st.write(f"**Target Sample Size (per group):** `{target_sample_size}`")
 
     st.markdown("---")
     if run_analysis_button:
