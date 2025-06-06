@@ -100,7 +100,7 @@ if st.session_state['df'] is not None:
 
     st.sidebar.markdown("---")
     st.sidebar.write("Ready to analyze? Click the button below!")
-    run_analysis_button = st.sidebar.button("Run A/B Test Analysis", type="primary")
+    run_analysis_button = st.sidebar.button("Run Analysis", type="primary")
 
     # --- Main Content: Display Data Preview ---
     st.subheader("Data Preview")
