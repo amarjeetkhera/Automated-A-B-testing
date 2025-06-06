@@ -222,24 +222,24 @@ if st.session_state['df'] is not None:
     if run_analysis_button:
          st.header("A/B Test Analysis Results")
 
-        if st.session_state['df'] is None:
-            st.error("Please upload data before running analysis.")
-        elif variant_column not in st.session_state['df'].columns or metric_column not in st.session_state['df'].columns:
-            st.error("Selected variant or metric column not found in the uploaded data. Please check your selections.")
-        else:
-            st.info(f"Running analysis for Experiment: **{experiment_name}**")
+         if st.session_state['df'] is None:
+             st.error("Please upload data before running analysis.")
+         elif variant_column not in st.session_state['df'].columns or metric_column not in st.session_state['df'].columns:
+             st.error("Selected variant or metric column not found in the uploaded data. Please check your selections.")
+         else:
+             st.info(f"Running analysis for Experiment: **{experiment_name}**")
 
-            if metric_type == 'Discrete':
-                perform_discrete_ab_test(
-                    st.session_state['df'].copy(), # Pass a copy to avoid modifying original df in session state
-                    variant_column,
-                    metric_column
+             if metric_type == 'Discrete':
+                 perform_discrete_ab_test(
+                     st.session_state['df'].copy(), # Pass a copy to avoid modifying original df in session state
+                     variant_column,
+                     metric_column
                 )
-            elif metric_type == 'Continuous':
-                st.warning("Continuous metric analysis logic is not yet implemented. Please select 'Discrete' for now.")
-                # We'll implement this in the next step!
-            else:
-                st.error("Unknown metric type selected.")
+             elif metric_type == 'Continuous':
+                 st.warning("Continuous metric analysis logic is not yet implemented. Please select 'Discrete' for now.")
+                 # We'll implement this in the next step!
+             else:
+                 st.error("Unknown metric type selected.")
 else:
     st.info("Please upload a CSV file in the sidebar to configure your A/B test.")
     st.markdown("---")
