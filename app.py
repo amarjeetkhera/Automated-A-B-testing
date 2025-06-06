@@ -38,6 +38,110 @@ if uploaded_file is not None:
 else:
     st.sidebar.info("Awaiting CSV file upload.")
 
+# --- Functions for Statistical Tests ---
+
+def perform_discrete_ab_test(df, variant_col, metric_col):
+    """
+    Performs A/B test for discrete metrics.
+    Decides between Chi-squared and Fisher's exact test based on expected counts.
+    Assumes metric_col contains binary outcomes.
+    """
+    st.subheader("Results for Discrete Metric Test")
+
+    # Ensure metric column is numerical (0/1) for counting
+    # Attempt to convert to numeric, coercing errors to NaN
+    df[metric_col] = pd.to_numeric(df[metric_col], errors='coerce')
+    # Drop rows where metric is not a valid number
+    df_cleaned = df.dropna(subset=[metric_col])
+
+    if df_cleaned[metric_col].nunique() > 2:
+        st.error(f"The selected discrete metric column '{metric_col}' contains more than two unique values. "
+                 "Please ensure it's a binary outcome (e.g., 0/1 for success/failure).")
+        return
+
+    # Create a contingency table
+    # Rows: Variants (Control, Treatment/Variant A, B, etc.)
+    # Columns: Metric outcome (e.g., Not Converted (0), Converted (1))
+    contingency_table = pd.crosstab(df_cleaned[variant_col], df_cleaned[metric_col])
+
+    if contingency_table.empty:
+        st.error("Could not create a contingency table. Check your variant and metric columns.")
+        return
+
+    st.write("### Contingency Table:")
+    st.dataframe(contingency_table)
+
+    # Calculate expected frequencies
+    chi2, p_val, dof, expected = stats.chi2_contingency(contingency_table)
+    expected_df = pd.DataFrame(expected, index=contingency_table.index, columns=contingency_table.columns)
+
+    st.write("### Expected Frequencies:")
+    st.dataframe(expected_df.round(2)) # Round for display
+
+    # Check assumptions for Chi-squared test
+    # Rule of thumb: no more than 20% of expected cell counts are less than 5, and none less than 1.
+    small_expected_cells = (expected < 5).sum()
+    total_cells = expected.size
+    percentage_small_expected = (small_expected_cells / total_cells) * 100
+
+    st.write(f"Percentage of cells with expected frequency < 5: `{percentage_small_expected:.2f}%`")
+
+    if percentage_small_expected <= 20 and np.all(expected >= 1):
+        # Use Pearson's Chi-squared test
+        st.write("---")
+        st.write("### Test Method: Pearson's Chi-squared Test")
+        st.write(f"Chi-squared statistic: `{chi2:.3f}`")
+        st.write(f"Degrees of freedom (dof): `{dof}`")
+
+        # Interpretation of p-value
+        st.write(f"P-value: `{p_val:.5f}`")
+        if p_val < 0.05: # Common significance level
+            st.success("Conclusion: The difference between variants is **statistically significant** (p < 0.05).")
+            st.markdown(f"This suggests that the **'{variant_col}'** has a significant effect on the **'{metric_col}'**.")
+        else:
+            st.info("Conclusion: The difference between variants is **not statistically significant** (p >= 0.05).")
+            st.markdown("We do not have enough evidence to claim a significant difference in outcomes between the variants.")
+
+        # Display actual rates
+        total_counts = contingency_table.sum(axis=1)
+        metric_success_index = 1 if 1 in contingency_table.columns else (0 if 0 in contingency_table.columns else None) # Assuming 1 is success
+        if metric_success_index is not None and metric_success_index in contingency_table.columns:
+            conversion_rates = (contingency_table[metric_success_index] / total_counts) * 100
+            st.write("### Observed Metric Rates (%):")
+            st.dataframe(conversion_rates.rename('Rate (%)'))
+        else:
+            st.warning("Could not determine success column for observed rates.")
+
+
+    else:
+        # Use Fisher's exact test
+        st.write("---")
+        st.write("### Test Method: Fisher's Exact Test (due to small expected cell counts)")
+        # Fisher's exact test for 2x2 table
+        if contingency_table.shape == (2, 2):
+            odds_ratio, p_val = stats.fisher_exact(contingency_table)
+            st.write(f"P-value: `{p_val:.5f}`")
+            st.write(f"Odds Ratio: `{odds_ratio:.3f}`")
+            if p_val < 0.05:
+                st.success("Conclusion: The difference between variants is **statistically significant** (p < 0.05).")
+                st.markdown(f"This suggests that the **'{variant_col}'** has a significant effect on the **'{metric_col}'**.")
+            else:
+                st.info("Conclusion: The difference between variants is **not statistically significant** (p >= 0.05).")
+                st.markdown("We do not have enough evidence to claim a significant difference in outcomes between the variants.")
+        else:
+            st.error("Fisher's Exact Test is primarily for 2x2 tables when assumptions for Chi-squared are violated. Your contingency table is not 2x2.")
+            st.warning("Consider aggregating your variants or checking your data if you expected a 2x2 table.")
+
+        # Display actual rates (similar to Chi-squared)
+        total_counts = contingency_table.sum(axis=1)
+        metric_success_index = 1 if 1 in contingency_table.columns else (0 if 0 in contingency_table.columns else None) # Assuming 1 is success
+        if metric_success_index is not None and metric_success_index in contingency_table.columns:
+            conversion_rates = (contingency_table[metric_success_index] / total_counts) * 100
+            st.write("### Observed Metric Rates (%):")
+            st.dataframe(conversion_rates.rename('Rate (%)'))
+        else:
+            st.warning("Could not determine success column for observed rates.")
+
 # Proceed with other inputs only if a DataFrame is available
 if st.session_state['df'] is not None:
     st.sidebar.markdown("---")
@@ -116,16 +220,26 @@ if st.session_state['df'] is not None:
 
     st.markdown("---")
     if run_analysis_button:
-        st.success("Analysis triggered! (Logic to be added in the next step)")
-        # This is where we'll call your A/B test analysis functions
-        # For now, just a placeholder.
-        # Your analysis logic will use:
-        # st.session_state['df']
-        # st.session_state['variant_column']
-        # st.session_state['metric_column']
-        # st.session_state['metric_type']
-        # and potentially st.session_state['target_sample_size'] for sample size check/power analysis
-        # etc.
+         st.header("A/B Test Analysis Results")
+
+        if st.session_state['df'] is None:
+            st.error("Please upload data before running analysis.")
+        elif variant_column not in st.session_state['df'].columns or metric_column not in st.session_state['df'].columns:
+            st.error("Selected variant or metric column not found in the uploaded data. Please check your selections.")
+        else:
+            st.info(f"Running analysis for Experiment: **{experiment_name}**")
+
+            if metric_type == 'Discrete':
+                perform_discrete_ab_test(
+                    st.session_state['df'].copy(), # Pass a copy to avoid modifying original df in session state
+                    variant_column,
+                    metric_column
+                )
+            elif metric_type == 'Continuous':
+                st.warning("Continuous metric analysis logic is not yet implemented. Please select 'Discrete' for now.")
+                # We'll implement this in the next step!
+            else:
+                st.error("Unknown metric type selected.")
 else:
     st.info("Please upload a CSV file in the sidebar to configure your A/B test.")
     st.markdown("---")
