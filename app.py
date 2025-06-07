@@ -315,6 +315,7 @@ if st.session_state['df'] is not None:
                        st.session_state['df'].copy(),
                        variant_column,
                        metric_column
+                )
              else:
                  st.error("Unknown metric type selected.")
 else:
