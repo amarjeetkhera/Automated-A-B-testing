@@ -167,6 +167,7 @@ def perform_continuous_ab_test(df, variant_col, metric_col):
     group_a = df_cleaned[df_cleaned[variant_col] == variants[0]][metric_col]
     group_b = df_cleaned[df_cleaned[variant_col] == variants[1]][metric_col]
 
+    st.write(group_a)
     st.write(f"**Group '{variants[0]}' (N={len(group_a)}):** Mean = `{group_a.mean():.3f}`, Std Dev = `{group_a.std():.3f}`")
     st.write(f"**Group '{variants[1]}' (N={len(group_b)}):** Mean = `{group_b.mean():.3f}`, Std Dev = `{group_b.std():.3f}`")
 
