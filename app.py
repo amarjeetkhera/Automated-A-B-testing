@@ -311,8 +311,10 @@ if st.session_state['df'] is not None:
                      metric_column
                 )
              elif metric_type == 'Continuous':
-                 st.warning("Continuous metric analysis logic is not yet implemented. Please select 'Discrete' for now.")
-                 # We'll implement this in the next step!
+                   perform_continuous_ab_test(
+                       st.session_state['df'].copy(),
+                       variant_column,
+                       metric_column
              else:
                  st.error("Unknown metric type selected.")
 else:
