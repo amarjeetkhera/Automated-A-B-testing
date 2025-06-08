@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 from scipy import stats
 import numpy as np
+import plotly.express as px
+import statsmodels.api as sm
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -21,27 +23,7 @@ Use the sidebar on the left to upload your experiment data and configure your te
 if 'df' not in st.session_state:
     st.session_state['df'] = None
 
-# --- Sidebar for User Inputs ---
-st.sidebar.header("Configure Your A/B Test")
-
-# 1. File Uploader in Sidebar
-st.sidebar.subheader("1. Upload Your Data")
-uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type="csv")
-
-if uploaded_file is not None:
-    try:
-        df = pd.read_csv(uploaded_file)
-        st.session_state['df'] = df # Store DataFrame in session state
-        st.sidebar.success("File uploaded successfully!")
-    except Exception as e:
-        st.sidebar.error(f"Error reading file: {e}")
-        st.session_state['df'] = None # Reset df if error
-        st.sidebar.write("Please ensure your file is a valid CSV format.")
-else:
-    st.sidebar.info("Awaiting CSV file upload.")
-
 # --- Functions for Statistical Tests ---
-
 def perform_discrete_ab_test(df, variant_col, metric_col):
     """
     Performs A/B test for discrete metrics.
@@ -88,6 +70,65 @@ def perform_discrete_ab_test(df, variant_col, metric_col):
 
     st.write(f"Percentage of cells with expected frequency < 5: `{percentage_small_expected:.2f}%`")
 
+     st.write("---")
+    # --- Calculate Conversion Rates and Confidence Intervals for Plotting ---
+    total_counts = contingency_table.sum(axis=1)
+    metric_success_index = 1 if 1 in contingency_table.columns else (0 if 0 in contingency_table.columns else None)
+
+    if metric_success_index is not None and metric_success_index in contingency_table.columns:
+        success_counts = contingency_table[metric_success_index]
+        conversion_rates = (success_counts / total_counts)
+
+        # Create a DataFrame for plotting
+        plot_df = pd.DataFrame({
+            variant_col: total_counts.index,
+            'Successes': success_counts,
+            'Trials': total_counts,
+            'Conversion_Rate': conversion_rates * 100 # Convert to percentage for display
+        })
+
+        # Calculate confidence intervals
+        alpha = 0.05 # For 95% confidence interval
+        conf_int_lower = []
+        conf_int_upper = []
+        for i in range(len(plot_df)):
+            count = plot_df['Successes'].iloc[i]
+            nobs = plot_df['Trials'].iloc[i]
+            # Use normal approximation for confidence interval for proportions
+            # For very small N, other methods (e.g., Agresti-Coull) might be better, but normal is standard for larger N
+            ci_low, ci_upp = sm.stats.proportion_confint(count, nobs, alpha=alpha, method='normal')
+            conf_int_lower.append(ci_low * 100) # Convert to percentage
+            conf_int_upper.append(ci_upp * 100) # Convert to percentage
+
+        plot_df['CI_Lower'] = conf_int_lower
+        plot_df['CI_Upper'] = conf_int_upper
+
+        st.write("### Observed Metric Rates (% with 95% CI):")
+        st.dataframe(plot_df[[variant_col, 'Conversion_Rate', 'CI_Lower', 'CI_Upper']].round(2))
+
+        # --- NEW: Bar Chart for Discrete Metric ---
+        st.write("### Visualizing Conversion Rates:")
+        fig_discrete = px.bar(
+            plot_df,
+            x=variant_col,
+            y='Conversion_Rate',
+            error_y='CI_Upper', # Upper bound for error bar
+            error_y_minus='CI_Lower', # Lower bound for error bar (since error_y takes absolute value, we give lower as negative)
+            labels={'Conversion_Rate': f'Conversion Rate (%)'},
+            title=f'Conversion Rate by {variant_col} (with 95% Confidence Intervals)',
+            height=400
+        )
+        # Manually adjust error bar values based on CI bounds
+        # Plotly's error_y expects the *difference* from y, so we adjust
+        fig_discrete.data[0].error_y.array = plot_df['CI_Upper'] - plot_df['Conversion_Rate']
+        fig_discrete.data[0].error_y.arrayminus = plot_df['Conversion_Rate'] - plot_df['CI_Lower']
+
+        st.plotly_chart(fig_discrete, use_container_width=True)
+
+    else:
+        st.warning("Could not determine success column for observed rates and plotting.")
+
+    # --- Statistical Test Output ---
     if percentage_small_expected <= 20 and np.all(expected >= 1):
         # Use Pearson's Chi-squared test
         st.write("---")
@@ -170,6 +211,20 @@ def perform_continuous_ab_test(df, variant_col, metric_col):
     st.write(f"**Group '{variants[0]}' (N={len(group_a)}):** Mean = `{group_a.mean():.3f}`, Std Dev = `{group_a.std():.3f}`")
     st.write(f"**Group '{variants[1]}' (N={len(group_b)}):** Mean = `{group_b.mean():.3f}`, Std Dev = `{group_b.std():.3f}`")
 
+    # --- Box Plot for Continuous Metric ---
+    st.write("### Visualizing Metric Distribution:")
+    fig_continuous = px.box(
+        df_cleaned,
+        x=variant_col,
+        y=metric_col,
+        points="all", # Show individual data points
+        labels={metric_col: f'{metric_col.replace("_", " ").title()}'},
+        title=f'Distribution of {metric_col.replace("_", " ").title()} by {variant_col}',
+        height=450
+    )
+    st.plotly_chart(fig_continuous, use_container_width=True)
+    st.write("---")
+
     # --- Check for Normality (especially for smaller samples) ---
     # Rule of thumb for "large sample": > 30 per group to rely on CLT for t-test
     is_large_sample = len(group_a) >= 30 and len(group_b) >= 30
@@ -230,6 +285,25 @@ def perform_continuous_ab_test(df, variant_col, metric_col):
             st.markdown("We do not have enough evidence to claim a significant difference in outcomes between the variants.")
     else:
         st.error("Could not perform statistical test. Please check your data and selections.")
+
+# --- Sidebar for User Inputs ---
+st.sidebar.header("Configure Your A/B Test")
+
+# 1. File Uploader in Sidebar
+st.sidebar.subheader("1. Upload Your Data")
+uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type="csv")
+
+if uploaded_file is not None:
+    try:
+        df = pd.read_csv(uploaded_file)
+        st.session_state['df'] = df # Store DataFrame in session state
+        st.sidebar.success("File uploaded successfully!")
+    except Exception as e:
+        st.sidebar.error(f"Error reading file: {e}")
+        st.session_state['df'] = None # Reset df if error
+        st.sidebar.write("Please ensure your file is a valid CSV format.")
+else:
+    st.sidebar.info("Awaiting CSV file upload.")
 
 # Proceed with other inputs only if a DataFrame is available
 if st.session_state['df'] is not None:
