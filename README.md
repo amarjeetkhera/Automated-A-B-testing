@@ -1,7 +1,5 @@
 # Automated A/B testing
 
-# Automated A/B Testing Tool
-
 ## Project Overview
 
 This project provides an intuitive and automated A/B testing tool designed to help users quickly analyze experiment results for both discrete and continuous metrics. A/B testing is a crucial methodology for data-driven decision-making, allowing businesses to compare two versions of a product, feature, or marketing campaign to determine which performs better. This tool simplifies the statistical analysis process, offering clear conclusions and interactive visualizations, making advanced statistical testing accessible without requiring deep expertise.
