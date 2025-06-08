@@ -106,7 +106,7 @@ def perform_discrete_ab_test(df, variant_col, metric_col):
         st.write("### Observed Metric Rates (% with 95% CI):")
         st.dataframe(plot_df[[variant_col, 'Conversion_Rate', 'CI_Lower', 'CI_Upper']].round(2))
 
-        # --- NEW: Bar Chart for Discrete Metric ---
+        # --- Bar Chart for Discrete Metric ---
         st.write("### Visualizing Conversion Rates:")
         fig_discrete = px.bar(
             plot_df,
@@ -225,7 +225,7 @@ def perform_continuous_ab_test(df, variant_col, metric_col):
     st.plotly_chart(fig_continuous, use_container_width=True)
     st.write("---")
 
-    # --- Check for Normality (especially for smaller samples) ---
+    # --- Check for Normality ---
     # Rule of thumb for "large sample": > 30 per group to rely on CLT for t-test
     is_large_sample = len(group_a) >= 30 and len(group_b) >= 30
 
@@ -319,7 +319,7 @@ if st.session_state['df'] is not None:
 
     # Get columns from the uploaded DataFrame
     all_columns = st.session_state['df'].columns.tolist()
-    if not all_columns: # Handle case with empty DataFrame (unlikely but good for robustness)
+    if not all_columns: # Handle case with empty DataFrame
         all_columns = ["No columns found"]
 
     # 3. Choose Columns for Test (Variant and Metric)
@@ -380,7 +380,7 @@ if st.session_state['df'] is not None:
 
              if metric_type == 'Discrete':
                  perform_discrete_ab_test(
-                     st.session_state['df'].copy(), # Pass a copy to avoid modifying original df in session state
+                     st.session_state['df'].copy(), # Passing a copy to avoid modifying original df in session state
                      variant_column,
                      metric_column
                 )
