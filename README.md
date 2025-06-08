@@ -1,1 +1,1 @@
-# Automated-A-B-testing
+# Automated A/B testing
