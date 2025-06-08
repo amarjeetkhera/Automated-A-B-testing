@@ -4,8 +4,8 @@ from scipy import stats
 import numpy as np
 import plotly.express as px
 import statsmodels.api as sm
-import perform_discrete_ab_test
-import perform_continuous_ab_test
+from discrete_tests import perform_discrete_ab_test
+from continuous_tests import perform_continuous_ab_test
 
 # --- Page Configuration ---
 st.set_page_config(
