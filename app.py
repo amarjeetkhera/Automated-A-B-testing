@@ -69,8 +69,8 @@ def perform_discrete_ab_test(df, variant_col, metric_col):
     percentage_small_expected = (small_expected_cells / total_cells) * 100
 
     st.write(f"Percentage of cells with expected frequency < 5: `{percentage_small_expected:.2f}%`")
-
     st.write("---")
+    
     # --- Calculate Conversion Rates and Confidence Intervals for Plotting ---
     total_counts = contingency_table.sum(axis=1)
     metric_success_index = 1 if 1 in contingency_table.columns else (0 if 0 in contingency_table.columns else None)
