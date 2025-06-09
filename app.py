@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # --- Main Content Area ---
-st.title("Automated A/B Testing Tool")
+st.title("Automated A/B Testing")
 st.markdown("""
 Welcome to your automated A/B testing platform!
 Use the sidebar on the left to upload your experiment data and configure your test.
