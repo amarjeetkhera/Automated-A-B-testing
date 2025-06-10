@@ -1,9 +1,5 @@
 import streamlit as st
 import pandas as pd
-from scipy import stats
-import numpy as np
-import plotly.express as px
-import statsmodels.api as sm
 from discrete_tests import perform_discrete_ab_test
 from continuous_tests import perform_continuous_ab_test
 
@@ -63,7 +59,6 @@ if st.session_state['df'] is not None:
 
     # 3. Choose Columns for Test (Variant and Metric)
     st.sidebar.subheader("3. Select Test Columns")
-    # Using 'st.columns' in sidebar for a slightly nicer layout if desired, otherwise st.selectbox works fine.
     col1, col2 = st.sidebar.columns(2)
 
     with col1:
@@ -107,30 +102,125 @@ if st.session_state['df'] is not None:
     st.write(f"**Metric Type:** `{metric_type}`")
 
     st.markdown("---")
+
+    # --- Analysis Results Section ---
     if run_analysis_button:
-         st.header("A/B Test Analysis Results")
+        st.header("A/B Test Analysis Results")
 
-         if st.session_state['df'] is None:
-             st.error("Please upload data before running analysis.")
-         elif variant_column not in st.session_state['df'].columns or metric_column not in st.session_state['df'].columns:
-             st.error("Selected variant or metric column not found in the uploaded data. Please check your selections.")
-         else:
-             st.info(f"Running analysis for Experiment: **{experiment_name}**")
+        if st.session_state['df'] is None:
+            st.error("Please upload data before running analysis.")
+        elif variant_column not in st.session_state['df'].columns or metric_column not in st.session_state['df'].columns:
+            st.error("Selected variant or metric column not found in the uploaded data. Please check your selections.")
+        else:
+            st.info(f"Running analysis for Experiment: **{experiment_name}**")
 
-             if metric_type == 'Discrete':
-                 perform_discrete_ab_test(
-                     st.session_state['df'].copy(), # Passing a copy to avoid modifying original df in session state
-                     variant_column,
-                     metric_column
+            # --- Discrete Test Handling ---
+            if metric_type == 'Discrete':
+                results = perform_discrete_ab_test(
+                    st.session_state['df'].copy(), # Pass a copy to avoid modifying original df in session state
+                    variant_column,
+                    metric_column
                 )
-             elif metric_type == 'Continuous':
-                   perform_continuous_ab_test(
-                       st.session_state['df'].copy(),
-                       variant_column,
-                       metric_column
+
+                if results["status"] == "error":
+                    st.error(results["error_message"])
+                else:
+                    st.subheader("Results for Discrete Metric Test")
+
+                    st.write("### Contingency Table:")
+                    st.dataframe(results["contingency_table"])
+
+                    st.write("### Expected Frequencies:")
+                    st.dataframe(results["expected_frequencies"].round(2))
+
+                    st.write(f"Percentage of cells with expected frequency < 5: `{results['percentage_small_expected']:.2f}%`")
+                    st.write("---")
+
+                    if results["observed_rates_df"] is not None:
+                        st.write("### Observed Metric Rates (% with 95% CI):")
+                        st.dataframe(results["observed_rates_df"].round(2))
+                        st.write("### Visualizing Conversion Rates:")
+                        st.plotly_chart(results["plot_figure"], use_container_width=True)
+                    else:
+                        st.warning("Could not determine success column for observed rates and plotting.")
+
+                    st.write("---")
+                    st.write(f"### Test Method: {results['test_method']}")
+
+                    if results["chi2_statistic"] is not None:
+                        st.write(f"Chi-squared statistic: `{results['chi2_statistic']:.3f}`")
+                        st.write(f"Degrees of freedom (dof): `{results['dof']}`")
+
+                    if results["odds_ratio"] is not None:
+                        st.write(f"Odds Ratio: `{results['odds_ratio']:.3f}`")
+
+                    st.write(f"P-value: `{results['p_value']:.5f}`")
+
+                    if results["conclusion"] == "statistically significant":
+                        st.success(f"Conclusion: The difference between variants is **{results['conclusion']}** (p < 0.05).")
+                        st.markdown(results["interpretation"])
+                    else:
+                        st.info(f"Conclusion: The difference between variants is **{results['conclusion']}** (p >= 0.05).")
+                        st.markdown(results["interpretation"])
+
+                    if results["raw_conversion_rates"] is not None:
+                        st.write("### Observed Metric Rates (%):")
+                        st.dataframe(results["raw_conversion_rates"].rename('Rate (%)'))
+                    else:
+                        st.warning("Could not determine success column for observed rates.")
+
+            # --- Continuous Test Handling ---
+            elif metric_type == 'Continuous':
+                results = perform_continuous_ab_test(
+                    st.session_state['df'].copy(),
+                    variant_column,
+                    metric_column
                 )
-             else:
-                 st.error("Unknown metric type selected.")
+
+                if results["status"] == "error":
+                    st.error(results["error_message"])
+                else:
+                    st.subheader("Results for Continuous Metric Test")
+
+                    st.write("### Group Statistics:")
+                    # Display group_stats nicely from the dictionary
+                    for variant, stats_data in results["group_stats"].items():
+                        st.write(f"**Group '{variant}' (N={stats_data['N']}):** Mean = `{stats_data['Mean']:.3f}`, Std Dev = `{stats_data['Std Dev']:.3f}`")
+
+                    st.write("### Visualizing Metric Distribution:")
+                    st.plotly_chart(results["plot_figure"], use_container_width=True)
+                    st.write("---")
+
+                    st.write("### Assumption Checks:")
+                    if not results["is_large_sample"]:
+                        # Assuming variants[0] and variants[1] are accessible or passed from the main df in app.py
+                        # Let's get them from the original df to ensure they match
+                        variants = st.session_state['df'][variant_column].dropna().unique()
+                        if len(variants) >= 2:
+                            st.write(f"Normality Test (Shapiro-Wilk for '{variants[0]}'): p={results['shapiro_a_p']:.3f} ({'Appears Normal' if results['is_normal_a'] else 'Not Normal'})")
+                            st.write(f"Normality Test (Shapiro-Wilk for '{variants[1]}'): p={results['shapiro_b_p']:.3f} ({'Appears Normal' if results['is_normal_b'] else 'Not Normal'})")
+                    else:
+                        st.info("Sample size is large (N >= 30 per group), so t-test robustness relies on the Central Limit Theorem. Normality assumption is less critical.")
+
+                    st.write(f"Homogeneity of Variances Test (Levene's): p={results['levene_p']:.3f} ({'Variances Appear Similar' if results['variances_similar'] else 'Variances Appear Dissimilar'})")
+                    st.write("---")
+
+                    st.write(f"### Test Method: {results['test_method']}")
+                    if results["statistic"] is not None:
+                        st.write(f"Statistic: `{results['statistic']:.3f}`")
+
+                    if results["p_value"] is not None:
+                        st.write(f"P-value: `{results['p_value']:.5f}`")
+                        if results["conclusion"] == "statistically significant":
+                            st.success(f"Conclusion: The difference in means between variants is **{results['conclusion']}** (p < 0.05).")
+                            st.markdown(results["interpretation"])
+                        else:
+                            st.info(f"Conclusion: The difference in means between variants is **{results['conclusion']}** (p >= 0.05).")
+                            st.markdown(results["interpretation"])
+                    else:
+                        st.error("Could not determine test conclusion.")
+            else:
+                st.error("Unknown metric type selected.")
 else:
     st.info("Please upload a CSV file in the sidebar to configure your A/B test.")
     st.markdown("---")
