@@ -10,7 +10,7 @@ The Automated A/B Testing Tool is built using Python and deployed on Streamlit a
 
 ![Discrete Metric__20250610_212126_0000](https://github.com/user-attachments/assets/e64d6b23-4678-4617-8970-2094c100e409)
 
-(Kindly cite this repo if you use this flow chart)
+(Kindly cite this repository if you use this flow chart)
 
 ## Correlation vs Causation
 While A/B testing is designed to establish causality by comparing randomized groups, it's crucial to remember a fundamental principle of statistics: Correlation does not imply causation.
