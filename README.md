@@ -2,95 +2,33 @@
 
 ## Project Overview
 
-This project provides an intuitive and automated A/B testing tool designed to help users quickly analyze experiment results for both discrete and continuous metrics. A/B testing is a crucial methodology for data-driven decision-making, allowing businesses to compare two versions of a product, feature, or marketing campaign to determine which performs better. This tool simplifies the statistical analysis process, offering clear conclusions and interactive visualizations, making advanced statistical testing accessible without requiring deep expertise.
+This project provides an intuitive and automated A/B testing tool designed to help users quickly analyze experiment results for both discrete and continuous metrics. A/B testing is a crucial methodology for data-driven decision-making, allowing businesses to compare two versions of a product, feature or marketing campaign to determine which version performs better and if the changes made are making any significant impact. This tool simplifies the statistical analysis process, offering clear conclusions and interactive visualizations, making advanced statistical testing accessible without requiring deep expertise.
 
 ## Description
 
-The Automated A/B Testing Tool is built as a Streamlit web application, allowing for easy data upload and interactive analysis. It intelligently selects the appropriate statistical test based on the type of metric (discrete or continuous) and inherent data properties, following a robust decision-making flowchart.
+The Automated A/B Testing Tool is built using Python and deployed on Streamlit as a webapp, allowing for easy data upload and interactive analysis. It intelligently selects the appropriate statistical test based on the type of metric (discrete or continuous) and inherent data properties, following a robust decision-making flowchart.
 
-### Key Statistical Features:
+![Discrete Metric__20250610_212126_0000](https://github.com/user-attachments/assets/e64d6b23-4678-4617-8970-2094c100e409)
 
-* **Discrete Metrics (e.g., Conversion Rates, Click-Through Rates):**
-    * **Chi-squared Test:** Used for comparing proportions when expected frequencies are sufficiently large.
-    * **Fisher's Exact Test:** Employed for comparing proportions when expected frequencies are small, ensuring accurate results even with limited data.
-    * Includes validation for binary outcomes.
 
-* **Continuous Metrics (e.g., Revenue, Time Spent, Page Load Speed):**
-    * **Assumption Checks:** Dynamically assesses sample size, normality (using Shapiro-Wilk test for smaller samples), and homogeneity of variances (using Levene's test).
-    * **Student's t-test:** Applied when variances between groups are similar.
-    * **Welch's t-test:** Used when variances between groups are dissimilar, providing a more robust comparison.
-    * **Mann-Whitney U Test:** A non-parametric alternative used for non-normally distributed data or smaller sample sizes where parametric assumptions are not met.
 
-### Data Handling and Visualization:
+## Correlation vs Causation
+While A/B testing is designed to establish causality by comparing randomized groups, it's crucial to remember a fundamental principle of statistics: Correlation does not imply causation.
 
-* Accepts CSV file uploads for experiment data.
-* Automatically cleans and processes the selected variant and metric columns.
-* Generates **interactive charts** using `Plotly.express` to visualize results:
-    * **Discrete:** Bar charts displaying conversion rates with 95% confidence intervals.
-    * **Continuous:** Box plots showing the distribution of the metric for each variant, including individual data points.
+This tool helps identify statistical differences between groups, which, when combined with a properly designed experiment (e.g., random assignment, controlled variables, sufficient sample size), can indicate a causal relationship. However, the tool itself cannot guarantee the design or execution of a flawless experiment. Always ensure your experiment setup adheres to best practices to confidently infer causation from the observed statistical significance. The tool aims to provide actionable insights, empowering users to make initial data-backed decisions swiftly.
 
-The tool aims to provide actionable insights, empowering users to make data-backed decisions swiftly.
 
-## Key Features
+## Deployment
 
-* **User-Friendly Interface:** Built with Streamlit for an interactive and accessible experience.
-* **Automated Test Selection:** Intelligently chooses the correct statistical test based on metric type and data characteristics.
-* **Comprehensive Statistical Analysis:** Supports Chi-squared, Fisher's Exact, Student's t-test, Welch's t-test, and Mann-Whitney U test.
-* **Assumption Validation:** Includes checks for expected frequencies, normality, and variance homogeneity.
-* **Clear Conclusions:** Provides easy-to-understand interpretations of statistical significance (p-values).
-* **Interactive Visualizations:** Enhances understanding with dynamic bar charts and box plots.
+The tool was built keeping best-practices in mind such as usage of modular functions for better reusability and understanding, and was deployed as a web application using Streamlit.
 
-## Installation and Local Usage
+Streamlit App link: https://automated-a-b-testing-e9xnkpkiday2bdq9tfsvcv.streamlit.app
 
-To run this A/B testing tool on your local machine or in a development environment like Gitpod/Codespaces:
+How to Use:
 
-1.  **Clone the repository:**
-    ```bash
-    git clone [https://github.com/your_username/your_repo_name.git](https://github.com/your_username/your_repo_name.git)
-    cd your_repo_name
-    ```
-    (Replace `your_username/your_repo_name.git` with your actual repository path)
-
-2.  **Create a virtual environment (recommended):**
-    ```bash
-    python -m venv venv
-    source venv/bin/activate # On Windows: .\venv\Scripts\activate
-    ```
-
-3.  **Install the required libraries:**
-    Create a `requirements.txt` file in the root of your project with the following content:
-    ```
-    streamlit
-    pandas
-    scipy
-    numpy
-    plotly
-    statsmodels
-    ```
-    Then, install them:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4.  **Run the Streamlit application:**
-    ```bash
-    streamlit run app.py
-    ```
-
-5.  Your web browser should automatically open the Streamlit application. If not, open your browser and navigate to the local URL displayed in the terminal (usually `http://localhost:8501`).
-
-## How to Use
-
-1.  **Upload Your Data:** In the sidebar, click "Choose a CSV file" and upload your experiment data. Ensure your CSV has at least two columns: one for variants (e.g., 'control', 'treatment') and one for your metric (e.g., 'conversion', 'revenue').
-2.  **Select Columns:** From the dropdowns, choose the correct "Variant Column" and "Metric Column".
-3.  **Choose Metric Type:** Select whether your metric is "Discrete" (binary outcomes like conversions) or "Continuous" (numerical values like revenue).
-4.  **Run Analysis:** Click the "Run A/B Test Analysis" button.
-5.  **View Results:** The main section will display the contingency tables (for discrete), basic statistics, assumption checks, the chosen statistical test, the p-value, and interactive charts illustrating your results.
-
-## Contributing
+1. Visit the Streamlit app link.
+2. Upload your experiment data in .csv format in the sidebar and configure your test.
+3. View the statistical test results.
 
 Feel free to fork this repository, submit pull requests, or open issues if you have suggestions or find bugs.
 
-## License
-
-This project is open-source and available under the [MIT License](LICENSE) (or choose your preferred license).
