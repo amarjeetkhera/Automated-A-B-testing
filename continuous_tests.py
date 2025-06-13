@@ -74,7 +74,7 @@ def perform_continuous_ab_test(df, variant_col, metric_col):
         df_cleaned,
         x=variant_col,
         y=metric_col,
-        points="all", # Show individual data points
+        points="all", # For showing individual data points
         labels={metric_col: f'{metric_col.replace("_", " ").title()}'},
         title=f'Distribution of {metric_col.replace("_", " ").title()} by {variant_col}',
         height=450
