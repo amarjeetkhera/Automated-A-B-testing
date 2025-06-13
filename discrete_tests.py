@@ -34,7 +34,7 @@ def perform_discrete_ab_test(df, variant_col, metric_col):
         "odds_ratio": None,
         "conclusion": None,
         "interpretation": None,
-        "raw_conversion_rates": None # Store raw conversion rates here
+        "raw_conversion_rates": None
     }
 
     # Ensure metric column is numerical (0/1) for counting
@@ -76,7 +76,6 @@ def perform_discrete_ab_test(df, variant_col, metric_col):
     # --- Calculate Conversion Rates and Confidence Intervals for Plotting ---
     total_counts = contingency_table.sum(axis=1)
     # Determine the "success" column. Assuming 1 represents success.
-    # If 0 is success, this logic needs adjustment.
     metric_success_index = 1 if 1 in contingency_table.columns else (0 if 0 in contingency_table.columns else None)
 
     if metric_success_index is not None and metric_success_index in contingency_table.columns:
@@ -87,7 +86,7 @@ def perform_discrete_ab_test(df, variant_col, metric_col):
             variant_col: total_counts.index,
             'Successes': success_counts,
             'Trials': total_counts,
-            'Conversion_Rate': conversion_rates * 100 # Convert to percentage for display
+            'Conversion_Rate': conversion_rates * 100
         })
         results["raw_conversion_rates"] = conversion_rates * 100
 
