@@ -1,5 +1,3 @@
-# continuous_tests.py
-
 import pandas as pd
 from scipy import stats
 import numpy as np
