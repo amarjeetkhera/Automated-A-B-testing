@@ -20,7 +20,7 @@ This tool helps identify statistical differences between groups, which, when com
 
 ## Deployment
 
-The tool was built keeping best-practices in mind such as usage of modular functions for better reusability and understanding, and was deployed as a web application using Streamlit.
+The tool was built keeping best-practices in mind such as usage of modular functions for better reusability and understanding. Initially, it was deployed as a web application using Streamlit Cloud for quick accessibility and demonstration.
 
 Streamlit App link: https://automated-a-b-testing-e9xnkpkiday2bdq9tfsvcv.streamlit.app
 
@@ -29,6 +29,14 @@ How to Use:
 1. Visit the Streamlit app link.
 2. Upload your experiment data in .csv format in the sidebar and configure your test.
 3. View the statistical test results.
+
+### Automated Deployment to Azure (Production-Ready CI/CD)
+
+To elevate the project to a more robust, scalable, and automated environment, the application has also been deployed to Azure Container Apps leveraging a Continuous Integration/Continuous Delivery (CI/CD) pipeline with GitHub Actions.
+
+This pipeline automatically builds and deploys the latest version of the application to Azure whenever changes are pushed to the main branch.
+
+Azure Deployed App link: https://ab-testing-tool-aca.yellowwater-7ebb3e08.westeurope.azurecontainerapps.io
 
 Feel free to fork this repository, submit pull requests, or open issues if you have suggestions or find bugs.
 
