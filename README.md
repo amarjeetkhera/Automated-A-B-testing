@@ -32,7 +32,7 @@ How to Use:
 
 ### Automated Deployment to Azure (Production-Ready CI/CD)
 
-To elevate the project to a more robust, scalable, and automated environment, the application has also been deployed to Azure Container Apps leveraging a Continuous Integration/Continuous Delivery (CI/CD) pipeline with GitHub Actions.
+To elevate the project to a more robust, scalable, and automated environment, the application has also been deployed to Azure as a Container App leveraging a Continuous Integration/Continuous Delivery (CI/CD) pipeline with GitHub Actions.
 
 This pipeline automatically builds and deploys the latest version of the application to Azure whenever changes are pushed to the main branch.
 
